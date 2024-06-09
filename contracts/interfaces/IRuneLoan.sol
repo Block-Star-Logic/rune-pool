@@ -2,7 +2,7 @@
 
 pragma solidity >=0.8.2 <0.9.0;
 
-import {Investment, Repayment, DrawDown} from "../IRStructs.sol";
+import {Investment, Repayment, DrawDown, Loan} from "./IRStructs.sol";
 
 interface IRuneLoan {
 
@@ -13,6 +13,8 @@ interface IRuneLoan {
     function getRepaymentIds() view external returns (uint256 [] memory repaymentIds);
 
     function getDrawDownIds() view external returns (uint256 [] memory _drawdownIds);
+    
+    function secureCollateral() external returns (bool _secured);
     
     function getInvestment(uint256 _investmentId) view external returns (Investment memory _investment);
 

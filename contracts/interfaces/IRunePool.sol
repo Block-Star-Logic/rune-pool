@@ -2,7 +2,7 @@
 
 pragma solidity >=0.8.2 <0.9.0;
 
-import {Pool, PoolInvestment} from "../IRStructs.sol";
+import {Pool, PoolInvestment} from "./IRStructs.sol";
 
 interface IRunePool { 
 

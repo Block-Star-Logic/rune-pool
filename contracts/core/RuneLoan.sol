@@ -4,6 +4,7 @@ pragma solidity >=0.8.2 <0.9.0;
 
 import "../interfaces/IRuneLoan.sol";
 import "../interfaces/IRVersion.sol";
+import "../interfaces/IRegister.sol";
 
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
@@ -16,8 +17,18 @@ contract RuneLoan is IRuneLoan, IRVersion {
         _;
     }
 
+    modifier onlyRunePool() { 
+        require(msg.sender == register.getAddress(RUNE_POOL_CA), "only rune pool");
+        _;
+    }
+
     uint256 constant version = 2; 
     string constant name = "RUNE_LOAN"; 
+
+    string constant RUNE_POOL_CA = "RESERVED_RUNE_POOL"; 
+
+    IRegister register; 
+
     address immutable self; 
     bool NATIVE; 
     bool closed; 
@@ -31,7 +42,8 @@ contract RuneLoan is IRuneLoan, IRVersion {
     mapping(uint256=>Repayment) repaymentById; 
     mapping(uint256=>DrawDown) drawdownById; 
 
-    constructor(Loan memory _loan) { 
+    constructor(Loan memory _loan, address _register) { 
+        register = IRegister(_register);
         loan = _loan; 
         self = address(this);
         if(loan.erc20 == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE ) {
@@ -78,7 +90,7 @@ contract RuneLoan is IRuneLoan, IRVersion {
         return drawdownById[_drawdownId]; 
     }
 
-    function secureCollateral() external returns (bool _secured) {
+    function secureCollateral() external onlyRunePool returns (bool _secured) {
         IERC721(loan.collateral.rune).transferFrom(msg.sender, self, loan.collateral.id);
         open = true;
         return true; 
@@ -116,6 +128,7 @@ contract RuneLoan is IRuneLoan, IRVersion {
             loan.paidBack += loan.outstanding; 
             loan.outstanding = 0; 
             transferOut(msg.sender, remainder_);
+            releaseCollateralInternal(); 
             
         }
         else {
@@ -178,5 +191,10 @@ contract RuneLoan is IRuneLoan, IRVersion {
     function closeLoan() internal returns (bool _closed){
         closed = true; 
         return closed; 
+    }
+
+    function releaseCollateralInternal() internal returns (bool _released) {
+        IERC721(loan.collateral.rune).transferFrom(self, loan.borrower, loan.collateral.id);
+        return true; 
     }
 }
